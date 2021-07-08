@@ -7,7 +7,8 @@ trap trapcom SIGTERM SIGINT SIGKILL
 umask 777
 config='/etc/rc/daemon.conf'
 fp='/var/run/rc'
-[ -d "$fp" ] || mkdir -m 555 -p "$fp"
+[ -d "$fp" ] || mkdir -m 755 -p "$fp"
+# chown 0:0 "$fp"
 rm -rf "$fp"/*
 [ -f "$config" ] || { echo "$config file does not exists"; exit 2; }
 while read -r line; do
