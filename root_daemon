@@ -1,0 +1,28 @@
+#!/bin/bash
+trapcom() {
+	rm -rf "$fp"
+	exit 0
+}
+trap trapcom SIGTERM SIGINT SIGKILL
+umask 777
+config='/etc/rc/daemon.conf'
+fp='/var/run/rc'
+[ -d "$fp" ] || mkdir -m 555 -p "$fp"
+rm -rf "$fp"/*
+[ -f "$config" ] || { echo "$config file does not exists"; exit 2; }
+while read -r line; do
+	[ ! -p "$fp/root:$line.fifo" ] || [ ! -p "$fp/user:$line.fifo" ] && mkfifo "$fp"/root:"$line".fifo "$fp"/user:"$line".fifo || exit 1
+	chown "$line": "$fp"/root:"$line".fifo "$fp"/user:"$line".fifo || exit 1
+	chmod 600 "$fp"/root:"$line".fifo "$fp"/user:"$line".fifo || exit 1
+	all=("${all} ${line}")
+done < "$config"
+for username in ${all[@]}; do
+while [ -p "$fp/root:$username.fifo" ] && [ -p "$fp/user:$username.fifo" ]; do
+	line="$(cat "$fp/root:$username.fifo")"
+	first="${line%%###*}"
+	second="${line#*###}"
+	sh -c "cd $first; $second" 2>&1 3>&1 1> "$fp/user:$username.fifo"
+done &
+done
+echo Started.
+while :; do sleep 999999; done #
